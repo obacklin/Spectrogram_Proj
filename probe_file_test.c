@@ -1,6 +1,6 @@
 
-#include <stdlib.h>
-#include <stdio.h>
+#include "parsewav.h"
+#include <inttypes.h>
 
 int main(int argc, char* argv[argc+1]){
     
@@ -9,14 +9,10 @@ int main(int argc, char* argv[argc+1]){
         fprintf(stderr,"Usage %s <file_name>.wav", argv[0]);
         return EXIT_FAILURE;
     }
+    const char * filename = argv[1];
+    wav_info_t info;
 
-    FILE* file = fopen(argv[1], "rb");
-    if (!file){
-        return EXIT_FAILURE;
-    }
+    read_wav_info(filename, &info);
 
-    
-
-    fclose(file);
-    return EXIT_SUCCESS;
+    printf("Number of channels = %" PRIu16 , info.num_channels);
 }
