@@ -3,6 +3,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef enum wav_error {
+    WAV_OK = 0,
+    WAV_ERR_OPEN,
+    WAV_ERR_NOT_RIFF,
+    WAV_ERR_NOT_WAVE,
+    WAV_ERR_NO_FMT,
+    WAV_ERR_NO_DATA
+} wav_error_t;
+
+typedef struct wav_error_info {
+    wav_error_t err_code;
+    int sys_errno;
+    const char *path;
+} wav_error_info_t;
+
 typedef struct wav_info {
     uint16_t audio_format;   
     uint16_t num_channels;
@@ -13,8 +28,5 @@ typedef struct wav_info {
     uint32_t data_size;
 } wav_info_t;
 
-int read_wav_info(const char *path, wav_info_t *info);
-uint16_t read_u16_le(FILE *f);
-uint32_t read_u32_le(FILE *f);
-
-
+const char *wav_strerror(wav_error_t err);
+wav_error_t read_wav_info(const char *path, wav_info_t *info, wav_error_info_t * errinfo);
