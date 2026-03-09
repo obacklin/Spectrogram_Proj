@@ -19,7 +19,14 @@ static uint32_t read_u32_le(FILE *f) {
                      (b[3] << 24));
 }
 
-static inline void wav_set_error(wav_error_info_t *errinfo, wav_error_t err_code, const char * path){
+static inline void wav_set_error(wav_error_info_t *errinfo, wav_error_t err_code){
+    if(!errinfo)
+        return;
+    errinfo->err_code = err_code;
+    errinfo->sys_errno = errno;
+}
+
+static inline void wav_set_error_path(wav_error_info_t *errinfo, wav_error_t err_code, const char * path){
     if(!errinfo)
         return;
     errinfo->err_code = err_code;
@@ -44,26 +51,17 @@ const char *wav_strerror(wav_error_t err){
     return wav_error_strings[err];
 }
 
-wav_error_t read_wav_info(const char *path, wav_info_t *info, wav_error_info_t * errinfo){
+wav_error_t read_wav_info(FILE * file, wav_info_t *info, wav_error_info_t * errinfo){
     
     wav_error_t result = WAV_OK;
-    FILE *file = NULL;
-    
-    file = fopen(path, "rb");
-    if (!file){
-        result =  WAV_ERR_OPEN;
-        wav_set_error(errinfo, result, path);
-        goto cleanup;
-    }
 
     char id[4];
-
     //Look for header RIFF
     fread(id, 1, 4, file);
     if (memcmp(id, "RIFF", 4) != 0) {
-
         result = WAV_ERR_NOT_RIFF;
-        goto cleanup;
+        wav_set_error(errinfo, result);
+        return result;
     }
 
     read_u32_le(file); // File size skip
@@ -71,8 +69,8 @@ wav_error_t read_wav_info(const char *path, wav_info_t *info, wav_error_info_t *
     fread(id, 1, 4, file);
     if (memcmp(id, "WAVE", 4) != 0) {
         result = WAV_ERR_NOT_WAVE;
-        wav_set_error(errinfo, result, path);
-        goto cleanup;
+        wav_set_error(errinfo, result);
+        return result;
     }
 
     int fmt_found = 0;
@@ -90,7 +88,7 @@ wav_error_t read_wav_info(const char *path, wav_info_t *info, wav_error_info_t *
             info->num_channels = read_u16_le(file);
             info->sample_rate = read_u32_le(file);
             read_u32_le(file); // byte rate skip
-            read_u16_le(file); // block align skip
+            info->block_align = read_u16_le(file);
             info->bits_per_sample = read_u16_le(file);
 
             if(chunk_size > 16){
@@ -118,25 +116,44 @@ wav_error_t read_wav_info(const char *path, wav_info_t *info, wav_error_info_t *
 
     if(!fmt_found){
         result = WAV_ERR_NO_FMT;
-        wav_set_error(errinfo, result, path);
-        goto cleanup;
+        wav_set_error(errinfo, result);
+        return result;
     }
 
     if(!data_found){
         result = WAV_ERR_NO_DATA;
-        wav_set_error(errinfo, result, path);
-        goto cleanup;
+        wav_set_error(errinfo, result);
+        return result;
     }
 
-
-    cleanup:
-    if (file)
-        fclose(file);
-
     return result;
-
 }
 
-void stream_data(const char *path, wav_info_t *info, float *arr){
+float * wav_load_frames(FILE * file, wav_info_t *info){
+ /*
+    Returns allocated float array containing normalized pcm 16-bit values.
+ */
+    const float NORM_CONST = 32768.0f;
+    // Set file pointer to data
+    
+    // Compute data length
+    uint32_t data_size = info->data_size;
+    uint32_t block_size =info->block_align;
+    uint32_t total_frames = data_size / (uint32_t) block_size;
 
+
+    int16_t * buffer;
+    float * res_buffer;
+    buffer = (int16_t *) malloc(total_frames * sizeof(int16_t));
+    res_buffer = (float *) malloc(total_frames * sizeof(float));
+
+    fseek(file, info->data_offset, SEEK_SET);
+    fread(buffer, sizeof(int16_t), total_frames, file);
+
+    for(size_t i = 0; i < total_frames; i++ ){
+        res_buffer[i] = (float)buffer[i] / NORM_CONST;
+    }
+
+    free(buffer);
+    return res_buffer;
 }

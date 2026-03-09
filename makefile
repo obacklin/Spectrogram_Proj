@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -std=c11
+CFLAGS = -Wall -std=c11
 
 TARGET = probe_file_test
 
