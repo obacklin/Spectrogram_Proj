@@ -1,9 +1,8 @@
 #ifndef PARSE_WAW_H
-#define PARSE_WAW
+#define PARSE_WAW_H
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
 
 typedef enum wav_error {
     WAV_OK = 0,
@@ -26,7 +25,7 @@ typedef struct wav_info {
     uint32_t sample_rate;
     uint16_t bits_per_sample;
     uint16_t block_align;
-
+    size_t n_frames;
     uint32_t data_offset;
     uint32_t data_size;
 } wav_info_t;

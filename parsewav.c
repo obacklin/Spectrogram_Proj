@@ -1,4 +1,8 @@
 #include "parsewav.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 /*
     Functions for parsing wav file specs
 */
@@ -100,6 +104,8 @@ wav_error_t read_wav_info(FILE * file, wav_info_t *info, wav_error_info_t * erri
         else if (memcmp(id, "data", 4) == 0) {
             info->data_offset = ftell(file);
             info->data_size = chunk_size;
+            size_t total_frames = info->data_size / (size_t) info->block_align;
+            info->n_frames = total_frames;
             fseek(file, chunk_size, SEEK_CUR);
             data_found = 1;
         }
@@ -137,20 +143,15 @@ float * wav_load_frames(FILE * file, wav_info_t *info){
     // Set file pointer to data
     
     // Compute data length
-    uint32_t data_size = info->data_size;
-    uint32_t block_size =info->block_align;
-    uint32_t total_frames = data_size / (uint32_t) block_size;
-
-
     int16_t * buffer;
     float * res_buffer;
-    buffer = (int16_t *) malloc(total_frames * sizeof(int16_t));
-    res_buffer = (float *) malloc(total_frames * sizeof(float));
+    buffer = (int16_t *) malloc(info->n_frames * sizeof(int16_t));
+    res_buffer = (float *) malloc(info->n_frames * sizeof(float));
 
     fseek(file, info->data_offset, SEEK_SET);
-    fread(buffer, sizeof(int16_t), total_frames, file);
+    fread(buffer, sizeof(int16_t), info->n_frames, file);
 
-    for(size_t i = 0; i < total_frames; i++ ){
+    for(size_t i = 0; i < info->n_frames; i++ ){
         res_buffer[i] = (float)buffer[i] / NORM_CONST;
     }
 

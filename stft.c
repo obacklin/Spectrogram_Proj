@@ -1,5 +1,8 @@
 #include "stft.h"
 #include "window_stft.h"
+#include <stdlib.h>
+#include <stddef.h>
+
 
 int stft_init(stft_t *stft, size_t window_size, size_t hop_size){
     /*
@@ -42,10 +45,8 @@ void stft_process_frame(stft_t *stft, const float *input_frame, float complex * 
 
 void stft_destroy(stft_t * stft){
 
-    if(stft->window)
-        free(stft->window);
-    if(stft->fft_buffer)
-        free(stft->fft_buffer);
+    free(stft->window);
+    free(stft->fft_buffer);
     fft_plan_destroy(&stft->fft_plan);
     stft->fft_buffer = NULL;
     stft->window = NULL;

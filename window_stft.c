@@ -1,4 +1,5 @@
 #include "window_stft.h"
+#include <math.h>
 
 void window_hann(float *w, size_t N){
     

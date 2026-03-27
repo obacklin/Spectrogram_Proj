@@ -73,11 +73,8 @@ int fft_init(fft_plan_t *plan, size_t N){
 
 void fft_plan_destroy(fft_plan_t *plan)
 {   
-    if(plan->bitrev)
-        free(plan->bitrev);
-    if(plan->twiddles)
-        free(plan->twiddles);
-
+    free(plan->bitrev);
+    free(plan->twiddles);
     plan->bitrev = NULL;
     plan->twiddles = NULL;
 }
