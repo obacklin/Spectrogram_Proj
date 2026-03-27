@@ -1,9 +1,8 @@
 #ifndef FFT_BACKEND_H
 #define FFT_BACKEND_H
-#include <stdlib.h>
 #include <complex.h>
-#include <math.h>
-#define PI_f 3.14159265358979323846f
+#include <stddef.h>
+#include "spec_constants.h"
 
 typedef struct fft_plan {
 

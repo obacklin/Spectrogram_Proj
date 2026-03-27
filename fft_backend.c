@@ -1,4 +1,6 @@
 #include "fft_backend.h"
+#include <stdlib.h>
+#include <math.h>
 
 static size_t reverse_bits(size_t x, size_t bits)
 {
@@ -29,18 +31,9 @@ static void precompute_twiddles(fft_plan_t *plan)
 
     for (size_t k = 0; k < N/2; k++)
     {
-        float angle = -2.0f * PI_f * (float)k / (float)N;
+        float angle = -2.0f * PI_F * (float)k / (float)N;
         plan->twiddles[k] = cexpf(I * angle);
     }
-}
-
-static void precompute_bitrev(fft_plan_t *plan)
-{
-    size_t N = plan->N;
-    size_t bits = plan->log2N;
-
-    for (size_t i = 0; i < N; i++)
-        plan->bitrev[i] = reverse_bits(i, bits);
 }
 
 static size_t compute_log2(size_t N)
@@ -54,7 +47,7 @@ static size_t compute_log2(size_t N)
 }
 
 int fft_init(fft_plan_t *plan, size_t N){
-    if (N & (N-1) != 0){
+    if ((N & (N-1)) != 0){
         return -1;
     }
     plan->N = N;
@@ -74,12 +67,16 @@ int fft_init(fft_plan_t *plan, size_t N){
     precompute_bitrev(plan);
     precompute_twiddles(plan);
 
+    return 0;
+
 }
 
 void fft_plan_destroy(fft_plan_t *plan)
-{
-    free(plan->bitrev);
-    free(plan->twiddles);
+{   
+    if(plan->bitrev)
+        free(plan->bitrev);
+    if(plan->twiddles)
+        free(plan->twiddles);
 
     plan->bitrev = NULL;
     plan->twiddles = NULL;
@@ -111,7 +108,6 @@ void fft_execute(const fft_plan_t *plan, float complex *x)
             for (size_t j = 0; j < half; j++)
             {
                 float complex w = plan->twiddles[j * step];
-
                 float complex t = w * x[k + j + half];
                 float complex u = x[k + j];
 

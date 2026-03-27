@@ -42,6 +42,8 @@ int main(int argc, char* argv[argc+1]){
     for(size_t i = 0; i < 100; i ++){
         printf("Value %lld: %f\n", i, pcm_float[i]);
     }
+
+    
     
     return EXIT_SUCCESS;
     cleanup:

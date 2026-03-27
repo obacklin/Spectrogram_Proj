@@ -1,0 +1,6 @@
+#ifndef SPEC_CONSTANTS_H
+#define SPEC_CONSTANTS_H
+
+#define PI_F 3.14159265358979323846f
+
+#endif
